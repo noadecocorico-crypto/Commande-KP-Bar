@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bar à Cocktails 🍸</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: linear-gradient(160deg, #0d0520, #1a0500); font-family: Georgia, serif; color: #f5f0e8; }
+  header { background: linear-gradient(135deg, #1a0a2e, #2d0e00); padding: 14px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(240,192,64,.3); position: sticky; top: 0; z-index: 50; }
+  header h1 { font-size: 17px; color: #f0c040; }
+  header span.logo { font-size: 26px; }
+  #name-label { font-size: 12px; color: #aaa; }
+  #cart-badge { margin-left: auto; background: #f0c040; color: #1a0a2e; border-radius: 20px; padding: 5px 13px; font-weight: 700; font-size: 13px; cursor: pointer; display: none; }
+  .content { padding: 16px 14px 80px; max-width: 500px; margin: 0 auto; }
+  h2 { font-size: 19px; font-weight: 700; color: #f0c040; margin-bottom: 14px; }
+  .btn-gold { width: 100%; background: linear-gradient(135deg, #f0c040, #c8860a); color: #1a0a2e; border: none; border-radius: 11px; padding: 14px 0; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Georgia, serif; }
+  .btn-gold:disabled { opacity: 0.4; cursor: default; }
+  .btn-outline { background: transparent; border: 1px solid rgba(240,192,64,.5); color: #f0c040; border-radius: 11px; padding: 12px 0; font-size: 13px; cursor: pointer; font-family: Georgia, serif; }
+  .name-input { width: 100%; background: rgba(255,255,255,.08); border: 1px solid rgba(240,192,64,.4); border-radius: 11px; color: #f5f0e8; padding: 14px 16px; font-size: 16px; font-family: Georgia, serif; margin-bottom: 18px; outline: none; }
+  .name-input:focus { border-color: #f0c040; }
+  .menu-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 11px 13px; display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
+  .menu-emoji { font-size: 30px; }
+  .menu-name { font-weight: 700; font-size: 14px; }
+  .menu-desc { font-size: 11px; color: #999; margin-top: 2px; }
+  .qty-row { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+  .qty-minus { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; border-radius: 7px; width: 28px; height: 28px; font-size: 17px; cursor: pointer; }
+  .qty-plus { background: linear-gradient(135deg, #f0c040, #c8860a); border: none; color: #1a0a2e; border-radius: 7px; width: 28px; height: 28px; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .qty-num { color: #f0c040; font-weight: 700; font-size: 16px; min-width: 18px; text-align: center; }
+  /* Kebab modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: linear-gradient(160deg, #1a0a2e, #2d0e00); border-radius: 20px 20px 0 0; padding: 24px 18px 40px; width: 100%; max-height: 80vh; overflow-y: auto; }
+  .modal h3 { color: #f0c040; font-size: 18px; margin-bottom: 16px; }
+  .option-btn { display: flex; align-items: center; gap: 12px; width: 100%; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); border-radius: 10px; color: #f5f0e8; padding: 12px 14px; font-size: 14px; font-family: Georgia, serif; cursor: pointer; margin-bottom: 8px; text-align: left; }
+  .option-btn.selected { border-color: #f0c040; background: rgba(240,192,64,.15); }
+  .option-check { width: 20px; height: 20px; border-radius: 5px; border: 2px solid rgba(255,255,255,.3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .option-btn.selected .option-check { background: #f0c040; border-color: #f0c040; color: #1a0a2e; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  /* Recap */
+  .recap-box { background: rgba(255,255,255,.05); border: 1px solid rgba(240,192,64,.3); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .recap-name { color: #f0c040; font-weight: 700; font-size: 16px; margin-bottom: 9px; }
+  .recap-line { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.07); font-size: 13px; }
+  .recap-line span:last-child { color: #f0c040; }
+  .recap-sub { font-size: 11px; color: #aaa; margin-top: 2px; padding-left: 8px; }
+  textarea { width: 100%; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.2); border-radius: 10px; color: #f5f0e8; padding: 10px; font-size: 13px; font-family: Georgia, serif; resize: none; margin-bottom: 12px; }
+  .row { display: flex; gap: 10px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  #screen-done { text-align: center; padding-top: 80px; }
+  #screen-done .big { font-size: 64px; }
+  #screen-done h2 { font-size: 24px; color: #f0c040; margin: 16px 0 8px; }
+  #screen-done p { color: #aaa; font-size: 15px; }
+  #screen-done .btn-gold { margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">🍸</span>
+  <div>
+    <h1>Bar à Cocktails</h1>
+    <div id="name-label"></div>
+  </div>
+  <div id="cart-badge" onclick="goConfirm()">🛒 <span id="cart-count">0</span></div>
+</header>
+
+<div class="content">
+
+  <!-- ÉTAPE 1 : Nom -->
+  <div id="screen-name" class="screen active">
+    <h2>Comment tu t'appelles ?</h2>
+    <input class="name-input" id="name-input" type="text" placeholder="Ton prénom..." oninput="onNameInput()" />
+    <button class="btn-gold" id="btn-to-menu" disabled onclick="goMenu()">Voir la carte →</button>
+  </div>
+
+  <!-- ÉTAPE 2 : Menu -->
+  <div id="screen-menu" class="screen">
+    <h2>La carte 🍹</h2>
+    <div id="menu-list"></div>
+    <button class="btn-gold" id="btn-to-confirm" style="display:none;margin-top:16px" onclick="goConfirm()">
+      Valider (<span id="total-label">0</span>) →
+    </button>
+  </div>
+
+  <!-- ÉTAPE 3 : Confirmation -->
+  <div id="screen-confirm" class="screen">
+    <h2>Récapitulatif</h2>
+    <div class="recap-box">
+      <div class="recap-name" id="recap-name-display"></div>
+      <div id="recap-lines"></div>
+    </div>
+    <textarea id="note-input" placeholder="Note pour le barman ? (ex: sans glace...)" rows="3"></textarea>
+    <div class="row">
+      <button class="btn-outline" style="flex:1" onclick="goMenu()">← Modifier</button>
+      <button class="btn-gold" style="flex:2" id="btn-order" onclick="sendOrder()">Commander 🍹</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : Done -->
+  <div id="screen-done" class="screen">
+    <div class="big">🎉</div>
+    <h2>Commande envoyée !</h2>
+    <p>Le barman s'en occupe,<br><strong id="done-name" style="color:#f0c040"></strong> !</p>
+    <button class="btn-gold" onclick="reset()">Nouvelle commande</button>
+  </div>
+
+</div>
+
+<!-- Modal Kebab -->
+<div class="modal-overlay" id="kebab-modal">
+  <div class="modal">
+    <h3>🌯 Personnalise ton Kebab</h3>
+    <div id="kebab-options"></div>
+    <div class="modal-actions">
+      <button class="btn-outline" style="flex:1" onclick="closeKebab()">Annuler</button>
+      <button class="btn-gold" style="flex:2" onclick="confirmKebab()">Ajouter au panier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN   = "8362710075:AAHJP2kcSAaRbhxC12_iB_4g_BbKeOaP8js";
+const CHAT_ID = "8030285597";
+
+const MENU = [
+  { id:1, name:"Mojito",       emoji:"🌿", desc:"Rhum, menthe, citron vert" },
+  { id:2, name:"Moscow Mule",  emoji:"🫚", desc:"Vodka, ginger beer, citron vert" },
+  { id:3, name:"Spritz",       emoji:"🫧", desc:"Aperol, prosecco, eau gazeuse" },
+  { id:4, name:"Cuba Libre",   emoji:"🥤", desc:"Rhum, Coca-Cola, citron vert" },
+  { id:5, name:"Coca",         emoji:"🥥", desc:"Coca-Cola" },
+  { id:6, name:"Kebab",        emoji:"🌯", desc:"Personnalise tes garnitures", isKebab: true },
+];
+
+const KEBAB_OPTIONS = [
+  "Salade", "Tomate", "Oignon",
+  "Sauce BBQ", "Sauce Algérienne", "Sauce Pita",
+  "Supplément Cheddar"
+];
+
+let customerName = "";
+let cart = {}; // id -> { qty, options (pour kebab) }
+let kebabSelections = new Set();
+let kebabCount = 0; // pour différencier plusieurs kebabs
+
+function onNameInput() {
+  const val = document.getElementById("name-input").value.trim();
+  document.getElementById("btn-to-menu").disabled = val.length === 0;
+}
+
+function goMenu() {
+  customerName = document.getElementById("name-input").value.trim();
+  document.getElementById("name-label").textContent = customerName;
+  showScreen("screen-menu");
+}
+
+// ── Build menu ──
+const menuList = document.getElementById("menu-list");
+MENU.forEach(item => {
+  const card = document.createElement("div");
+  card.className = "menu-card";
+  card.id = "card-" + item.id;
+  card.innerHTML = `
+    <span class="menu-emoji">${item.emoji}</span>
+    <div style="flex:1">
+      <div class="menu-name">${item.name}</div>
+      <div class="menu-desc">${item.desc}</div>
+    </div>
+    <div class="qty-row" id="qty-${item.id}">
+      <button class="qty-plus" onclick="${item.isKebab ? 'openKebab()' : `addItem(${item.id})`}">+</button>
+    </div>
+  `;
+  menuList.appendChild(card);
+});
+
+// ── Kebab modal ──
+const kebabOptsContainer = document.getElementById("kebab-options");
+KEBAB_OPTIONS.forEach(opt => {
+  const btn = document.createElement("button");
+  btn.className = "option-btn";
+  btn.dataset.opt = opt;
+  btn.innerHTML = `<span class="option-check"></span> ${opt}`;
+  btn.onclick = () => {
+    if (kebabSelections.has(opt)) {
+      kebabSelections.delete(opt);
+      btn.classList.remove("selected");
+      btn.querySelector(".option-check").textContent = "";
+    } else {
+      kebabSelections.add(opt);
+      btn.classList.add("selected");
+      btn.querySelector(".option-check").textContent = "✓";
+    }
+  };
+  kebabOptsContainer.appendChild(btn);
+});
+
+function openKebab() {
+  kebabSelections = new Set();
+  document.querySelectorAll(".option-btn").forEach(b => {
+    b.classList.remove("selected");
+    b.querySelector(".option-check").textContent = "";
+  });
+  document.getElementById("kebab-modal").classList.add("open");
+}
+
+function closeKebab() {
+  document.getElementById("kebab-modal").classList.remove("open");
+}
+
+function confirmKebab() {
+  kebabCount++;
+  const key = "kebab_" + kebabCount;
+  if (!cart[7]) cart[7] = { qty: 0, kebabs: [] };
+  cart[7].qty++;
+  cart[7].kebabs.push([...kebabSelections]);
+  closeKebab();
+  updateKebabQty();
+  updateCartBadge();
+}
+
+function updateKebabQty() {
+  const row = document.getElementById("qty-7");
+  const qty = cart[7] ? cart[7].qty : 0;
+  if (qty > 0) {
+    row.innerHTML = `
+      <button class="qty-minus" onclick="removeKebab()">−</button>
+      <span class="qty-num">${qty}</span>
+      <button class="qty-plus" onclick="openKebab()">+</button>
+    `;
+  } else {
+    row.innerHTML = `<button class="qty-plus" onclick="openKebab()">+</button>`;
+  }
+}
+
+function removeKebab() {
+  if (!cart[7] || cart[7].qty === 0) return;
+  cart[7].qty--;
+  cart[7].kebabs.pop();
+  if (cart[7].qty === 0) delete cart[7];
+  updateKebabQty();
+  updateCartBadge();
+}
+
+// ── Regular items ──
+function addItem(id) {
+  if (!cart[id]) cart[id] = { qty: 0 };
+  cart[id].qty++;
+  updateQty(id);
+  updateCartBadge();
+}
+
+function removeItem(id) {
+  if (!cart[id]) return;
+  cart[id].qty--;
+  if (cart[id].qty === 0) delete cart[id];
+  updateQty(id);
+  updateCartBadge();
+}
+
+function updateQty(id) {
+  const row = document.getElementById("qty-" + id);
+  const qty = cart[id] ? cart[id].qty : 0;
+  if (qty > 0) {
+    row.innerHTML = `
+      <button class="qty-minus" onclick="removeItem(${id})">−</button>
+      <span class="qty-num">${qty}</span>
+      <button class="qty-plus" onclick="addItem(${id})">+</button>
+    `;
+  } else {
+    row.innerHTML = `<button class="qty-plus" onclick="addItem(${id})">+</button>`;
+  }
+}
+
+function totalItems() {
+  return Object.values(cart).reduce((a, b) => a + b.qty, 0);
+}
+
+function updateCartBadge() {
+  const total = totalItems();
+  const badge = document.getElementById("cart-badge");
+  badge.style.display = total > 0 ? "block" : "none";
+  document.getElementById("cart-count").textContent = total;
+  const btn = document.getElementById("btn-to-confirm");
+  if (total > 0) {
+    btn.style.display = "block";
+    document.getElementById("total-label").textContent = total + " article" + (total > 1 ? "s" : "");
+  } else {
+    btn.style.display = "none";
+  }
+}
+
+function goConfirm() {
+  document.getElementById("recap-name-display").textContent = "👤 " + customerName;
+  const lines = document.getElementById("recap-lines");
+  lines.innerHTML = "";
+  Object.entries(cart).forEach(([id, data]) => {
+    const item = MENU.find(x => x.id === Number(id));
+    if (item.isKebab) {
+      data.kebabs.forEach((opts, i) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <div class="recap-line"><span>🌯 Kebab</span><span>×1</span></div>
+          ${opts.length > 0 ? `<div class="recap-sub">${opts.join(", ")}</div>` : `<div class="recap-sub">Nature</div>`}
+        `;
+        lines.appendChild(div);
+      });
+    } else {
+      const div = document.createElement("div");
+      div.className = "recap-line";
+      div.innerHTML = `<span>${item.emoji} ${item.name}</span><span>×${data.qty}</span>`;
+      lines.appendChild(div);
+    }
+  });
+  showScreen("screen-confirm");
+}
+
+async function sendOrder() {
+  const btn = document.getElementById("btn-order");
+  btn.disabled = true;
+  btn.textContent = "Envoi...";
+
+  const note = document.getElementById("note-input").value;
+  const time = new Date().toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+
+  let itemsText = "";
+  Object.entries(cart).forEach(([id, data]) => {
+    const item = MENU.find(x => x.id === Number(id));
+    if (item.isKebab) {
+      data.kebabs.forEach((opts, i) => {
+        itemsText += `🌯 Kebab${opts.length > 0 ? " (" + opts.join(", ") + ")" : " (nature)"}\n`;
+      });
+    } else {
+      itemsText += `${item.emoji} ${item.name} ×${data.qty}\n`;
+    }
+  });
+
+  let msg = `🍸 *NOUVELLE COMMANDE*\n`;
+  msg += `👤 Nom : *${customerName}*\n`;
+  msg += `🕐 Heure : ${time}\n\n`;
+  msg += itemsText;
+  if (note) msg += `\n📝 Note : ${note}`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: "Markdown" })
+    });
+    document.getElementById("done-name").textContent = customerName;
+    showScreen("screen-done");
+  } catch(e) {
+    alert("Erreur d'envoi, vérifie ta connexion.");
+    btn.disabled = false;
+    btn.textContent = "Commander 🍹";
+  }
+}
+
+function reset() {
+  cart = {};
+  kebabCount = 0;
+  customerName = "";
+  document.getElementById("name-input").value = "";
+  document.getElementById("name-label").textContent = "";
+  document.getElementById("note-input").value = "";
+  document.getElementById("btn-to-menu").disabled = true;
+  MENU.forEach(item => {
+    if (item.isKebab) updateKebabQty();
+    else updateQty(item.id);  });
+  updateCartBadge();
+  showScreen("screen-name");
+}
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+</script>
+</body>
+</html>
